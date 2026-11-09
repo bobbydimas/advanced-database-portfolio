@@ -1,0 +1,28 @@
+DROP TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ANALYZE
+=== SHARD DISTRIBUTION ACROSS REGIONAL NODES ===
+ regional_shard_partition | station_code | replication_origin_node | records_stored | shard_data_volume_gb 
+--------------------------+--------------+-------------------------+----------------+----------------------
+(0 rows)
+
+=== DISTRIBUTED QUERY PLAN: SINGLE-SHARD PARTITION PRUNING ===
+                                                                                QUERY PLAN                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=0.25..8.29 rows=1 width=78) (actual time=0.107..0.107 rows=0.00 loops=1)
+   Buffers: shared hit=94
+   ->  Index Scan using shard_node_abj_pkey on shard_node_abj distributed_telemetry_ledger  (cost=0.25..8.27 rows=1 width=50) (actual time=0.106..0.106 rows=0.00 loops=1)
+         Index Cond: ((station_code)::text = 'ABJ-GS01'::text)
+         Filter: (aos_timestamp >= '2025-06-01 00:00:00+01'::timestamp with time zone)
+         Index Searches: 1
+         Buffers: shared hit=94
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.157 ms
+ Execution Time: 0.127 ms
+(11 rows)
+
