@@ -1,0 +1,69 @@
+ station_code |             facility_name             | rf_band | completed_passes | total_downlink_gb | mean_snr_db 
+--------------+---------------------------------------+---------+------------------+-------------------+-------------
+ ABJ-GS01     | Lugbe Space Tracking Complex          | S-Band  |             3829 |           9678.18 |       20.52
+ LAG-GS03     | Epe Coastal Downlink Facility         | Ka-Band |             3811 |           9622.75 |       20.54
+ ABJ-GS01     | Lugbe Space Tracking Complex          | Ka-Band |             3820 |           9579.50 |       20.46
+ ABJ-GS01     | Lugbe Space Tracking Complex          | X-Band  |             3784 |           9537.98 |       20.56
+ KAN-GS02     | Kano Northern Telemetry Array         | UHF     |             3797 |           9479.94 |       20.54
+ KAN-GS02     | Kano Northern Telemetry Array         | X-Band  |             3788 |           9443.07 |       20.58
+ JOS-GS04     | Plateau High-Altitude Deep Space Dish | S-Band  |             3751 |           9323.17 |       20.55
+ JOS-GS04     | Plateau High-Altitude Deep Space Dish | X-Band  |             3642 |           9171.08 |       20.43
+(8 rows)
+
+ spacecraft_name | orbital_regime | pass_id | max_elevation_deg | downlink_volume_mb | volume_rank 
+-----------------+----------------+---------+-------------------+--------------------+-------------
+ AERO-METEO-4    | MEO            |   37994 |              84.8 |            4999.68 |           1
+ AERO-METEO-4    | MEO            |   14155 |              46.9 |            4999.22 |           2
+ ECOWAS-RELAY-3  | GEO            |   18661 |              54.7 |            4999.07 |           1
+ ECOWAS-RELAY-3  | GEO            |   24356 |              61.8 |            4998.85 |           2
+ NIGCOMSAT-2R    | GEO            |    4610 |              82.1 |            4999.49 |           1
+ NIGCOMSAT-2R    | GEO            |   28166 |              20.0 |            4999.30 |           2
+ ORBITLINK-OPT-2 | LEO            |   34948 |              13.1 |            4999.61 |           1
+ ORBITLINK-OPT-2 | LEO            |   28411 |              68.5 |            4999.07 |           2
+ ORBITLINK-SAR-1 | LEO            |   15985 |              73.4 |            4998.21 |           1
+ ORBITLINK-SAR-1 | LEO            |   11846 |              21.2 |            4995.75 |           2
+ SAHEL-WATCH-1   | LEO            |   49268 |              83.2 |            4999.98 |           1
+ SAHEL-WATCH-1   | LEO            |   42353 |              14.1 |            4999.43 |           2
+(12 rows)
+
+DROP INDEX
+=== EXECUTION PLAN BEFORE INDEXING (BASELINE SEQ SCAN) ===
+                                                                                                               QUERY PLAN                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=1637.78..1638.90 rows=449 width=36) (actual time=6.430..6.468 rows=465.00 loops=1)
+   Sort Key: aos_timestamp DESC
+   Sort Method: quicksort  Memory: 50kB
+   Buffers: shared hit=621
+   ->  Seq Scan on contact_passes  (cost=0.00..1618.00 rows=449 width=36) (actual time=1.058..6.250 rows=465.00 loops=1)
+         Filter: ((aos_timestamp >= '2025-03-01 00:00:00+01'::timestamp with time zone) AND (aos_timestamp <= '2025-04-15 23:59:59+01'::timestamp with time zone) AND (satellite_id = 2) AND ((pass_status)::text = 'COMPLETED'::text))
+         Rows Removed by Filter: 49535
+         Buffers: shared hit=618
+ Planning:
+   Buffers: shared hit=27
+ Planning Time: 0.215 ms
+ Execution Time: 6.540 ms
+(12 rows)
+
+CREATE INDEX
+ANALYZE
+=== EXECUTION PLAN AFTER INDEXING (OPTIMISED INDEX SCAN) ===
+                                                                                                                    QUERY PLAN                                                                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=643.79..644.91 rows=448 width=36) (actual time=0.468..0.511 rows=465.00 loops=1)
+   Sort Key: aos_timestamp DESC
+   Sort Method: quicksort  Memory: 50kB
+   Buffers: shared hit=55 read=5
+   ->  Bitmap Heap Scan on contact_passes  (cost=19.25..624.06 rows=448 width=36) (actual time=0.192..0.350 rows=465.00 loops=1)
+         Recheck Cond: ((satellite_id = 2) AND ((pass_status)::text = 'COMPLETED'::text) AND (aos_timestamp >= '2025-03-01 00:00:00+01'::timestamp with time zone) AND (aos_timestamp <= '2025-04-15 23:59:59+01'::timestamp with time zone))
+         Heap Blocks: exact=55
+         Buffers: shared hit=55 read=5
+         ->  Bitmap Index Scan on idx_passes_sat_status_aos  (cost=0.00..19.13 rows=448 width=0) (actual time=0.171..0.172 rows=465.00 loops=1)
+               Index Cond: ((satellite_id = 2) AND ((pass_status)::text = 'COMPLETED'::text) AND (aos_timestamp >= '2025-03-01 00:00:00+01'::timestamp with time zone) AND (aos_timestamp <= '2025-04-15 23:59:59+01'::timestamp with time zone))
+               Index Searches: 1
+               Buffers: shared read=5
+ Planning:
+   Buffers: shared hit=23 read=1
+ Planning Time: 0.349 ms
+ Execution Time: 0.573 ms
+(16 rows)
+
