@@ -1,0 +1,69 @@
+Table satellites {
+  satellite_id int [pk, increment]
+  norad_catalog_no varchar(12) [unique, not null]
+  spacecraft_name varchar(80) [unique, not null]
+  orbital_regime varchar(10) [not null]
+  inclination_deg decimal [not null]
+  launch_date date [not null]
+  operational_state varchar(20) [not null]
+}
+
+Table ground_stations {
+  station_id int [pk, increment]
+  station_code varchar(10) [unique, not null]
+  facility_name varchar(100) [not null]
+  region_location varchar(80) [not null]
+  latitude_deg decimal [not null]
+  longitude_deg decimal [not null]
+  altitude_m int [not null]
+}
+
+Table antennas {
+  antenna_id int [pk, increment]
+  station_id int [not null]
+  antenna_designator varchar(20) [unique, not null]
+  rf_band varchar(15) [not null]
+  dish_diameter_m decimal [not null]
+  max_slew_rate_deg_sec decimal [not null]
+  maintenance_status varchar(20) [not null]
+}
+
+Table mission_operators {
+  operator_id int [pk, increment]
+  badge_number varchar(15) [unique, not null]
+  full_name varchar(100) [not null]
+  clearance_level varchar(15) [not null]
+  shift_group varchar(15) [not null]
+  active_duty boolean [default: true]
+}
+
+Table contact_passes {
+  pass_id bigint [pk, increment]
+  satellite_id int [not null]
+  antenna_id int [not null]
+  lead_operator_id int [not null]
+  aos_timestamp timestamp [not null]
+  los_timestamp timestamp [not null]
+  max_elevation_deg decimal [not null]
+  avg_snr_db decimal
+  downlink_volume_mb decimal [default: 0]
+  pass_status varchar(20) [not null]
+}
+
+Table uplink_commands {
+  command_id bigint [pk, increment]
+  pass_id bigint [not null]
+  issued_by_operator_id int [not null]
+  command_opcode varchar(25) [not null]
+  payload_hex varchar(256) [not null]
+  transmitted_at timestamp [not null]
+  ack_received boolean [default: false]
+  execution_state varchar(20) [not null]
+}
+
+Ref: antennas.station_id > ground_stations.station_id
+Ref: contact_passes.satellite_id > satellites.satellite_id
+Ref: contact_passes.antenna_id > antennas.antenna_id
+Ref: contact_passes.lead_operator_id > mission_operators.operator_id
+Ref: uplink_commands.pass_id > contact_passes.pass_id
+Ref: uplink_commands.issued_by_operator_id > mission_operators.operator_id
