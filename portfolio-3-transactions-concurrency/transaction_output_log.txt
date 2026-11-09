@@ -1,0 +1,56 @@
+=== SCENARIO 1: ATOMIC PASS SCHEDULING & COMMAND QUEUING (COMMIT) ===
+BEGIN
+ antenna_id | antenna_designator | maintenance_status 
+------------+--------------------+--------------------
+          1 | ABJ-X01            | ONLINE
+(1 row)
+
+INSERT 0 1
+INSERT 0 1
+COMMIT
+ pass_id |     aos_timestamp      | pass_status |    command_opcode     | execution_state 
+---------+------------------------+-------------+-----------------------+-----------------
+   50001 | 2026-11-15 14:00:00+01 | SCHEDULED   | PAYLOAD_SAR_CALIBRATE | QUEUED
+(1 row)
+
+=== SCENARIO 2: SAVEPOINT & ROLLBACK RECOVERY ===
+BEGIN
+UPDATE 1
+SAVEPOINT
+ROLLBACK
+COMMIT
+ antenna_id | antenna_designator | maintenance_status 
+------------+--------------------+--------------------
+          3 | ABJ-S03            | ONLINE
+(1 row)
+
+=== SCENARIO 3: FULL ATOMIC ROLLBACK ===
+BEGIN
+UPDATE 1
+State inside uncommitted transaction:
+ satellite_id | spacecraft_name | operational_state 
+--------------+-----------------+-------------------
+            1 | NIGCOMSAT-2R    | SAFE_MODE
+(1 row)
+
+ROLLBACK
+State after ROLLBACK (restored to NOMINAL):
+ satellite_id | spacecraft_name | operational_state 
+--------------+-----------------+-------------------
+            1 | NIGCOMSAT-2R    | NOMINAL
+(1 row)
+
+=== SCENARIO 4: REPEATABLE READ & PESSIMISTIC LOCKING ===
+BEGIN
+ antenna_id | antenna_designator | rf_band | maintenance_status 
+------------+--------------------+---------+--------------------
+          2 | ABJ-KA02           | Ka-Band | ONLINE
+(1 row)
+
+UPDATE 1
+COMMIT
+ pass_id | antenna_id | pass_status | downlink_volume_mb 
+---------+------------+-------------+--------------------
+   50001 |          1 | COMPLETED   |             512.40
+(1 row)
+
