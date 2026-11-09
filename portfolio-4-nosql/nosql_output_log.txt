@@ -1,0 +1,35 @@
+DROP TABLE
+CREATE TABLE
+CREATE INDEX
+INSERT 0 3
+=== NOSQL QUERY 1: DOCUMENT CONTAINMENT SEARCH (@> OPERATOR) ===
+    frame_uuid     |   spacecraft    | battery_temp_c |                         triggered_alerts                         
+-------------------+-----------------+----------------+------------------------------------------------------------------
+ FRM-20261109-0002 | ORBITLINK-SAR-1 | 36.8           | [                                                               +
+                   |                 |                |     {                                                           +
+                   |                 |                |         "code": "THERM_BATT_HIGH",                              +
+                   |                 |                |         "message": "Battery pack exceeded 35C during SAR burst",+
+                   |                 |                |         "severity": "WARNING"                                   +
+                   |                 |                |     }                                                           +
+                   |                 |                | ]
+ FRM-20261109-0003 | AERO-METEO-4    | 39.2           | [                                                               +
+                   |                 |                |     {                                                           +
+                   |                 |                |         "code": "EPS_UNDERVOLT",                                +
+                   |                 |                |         "message": "Main bus voltage dropped below 25.0V",      +
+                   |                 |                |         "severity": "CRITICAL"                                  +
+                   |                 |                |     },                                                          +
+                   |                 |                |     {                                                           +
+                   |                 |                |         "code": "THERM_BATT_HIGH",                              +
+                   |                 |                |         "message": "Battery thermal anomaly detected",          +
+                   |                 |                |         "severity": "WARNING"                                   +
+                   |                 |                |     }                                                           +
+                   |                 |                | ]
+(2 rows)
+
+=== NOSQL QUERY 2: AGGREGATING NESTED TELEMETRY SUB-DOCUMENTS ===
+   spacecraft    |  norad_id   | frames_captured | avg_batt_temp_c | peak_snr_db | min_soc_pct 
+-----------------+-------------+-----------------+-----------------+-------------+-------------
+ AERO-METEO-4    | NORAD-52310 |               1 |           39.20 |        11.2 |        42.0
+ ORBITLINK-SAR-1 | NORAD-51044 |               2 |           29.65 |        21.8 |        88.5
+(2 rows)
+
